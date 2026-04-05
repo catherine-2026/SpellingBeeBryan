@@ -1,0 +1,165 @@
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+  #app { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+  #timer { font-size: 2rem; font-weight: bold; color: #e53e3e; margin: 10px 0; }
+  .btn-primary { background: #4a90e2; color: white; border: none; padding: 15px; border-radius: 50px; cursor: pointer; width: 100%; font-size: 1.2rem; margin-bottom: 10px; }
+  .btn-hint { background: #edf2f7; border: 1px solid #cbd5e0; padding: 8px; width: 100%; cursor: pointer; border-radius: 5px; margin-bottom: 10px; }
+  .input-container { margin-top: 20px; display: flex; gap: 10px; }
+  input { flex: 1; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; }
+  #submitBtn { background: #48bb78; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+  #feedback { margin-top: 15px; font-weight: bold; min-height: 25px; }
+  .hint-box { display: none; background: #fffaf0; padding: 10px; border: 1px dashed #f6ad55; margin-bottom: 10px; text-align: left; font-size: 0.9rem; }
+  .history-box { margin-top: 30px; width: 100%; max-width: 400px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+  .history-list { text-align: left; font-size: 0.85rem; max-height: 150px; overflow-y: auto; padding-left: 20px; }
+  .correct-text { color: green; }
+  .incorrect-text { color: red; }
+</style>
+
+<div id="app">
+  <h2>🐝 Spelling Bee</h2>
+  <div id="status">🔴 Click to Start</div>
+  <div id="timer">60s</div>
+  
+  <button onclick="speakWord()" class="btn-primary">🔊 Listen to Word</button>
+  
+  <div id="hintContent" class="hint-box">
+    <strong>Definition:</strong> <span id="definitionText"></span>
+  </div>
+  <button onclick="toggleHint()" class="btn-hint">Get Definition (Hint)</button>
+
+  <div class="input-container">
+    <input type="text" id="wordInput" placeholder="Type here..." autocomplete="off">
+    <button onclick="checkAnswer()" id="submitBtn">Submit</button>
+  </div>
+  
+  <div id="feedback">Attempts Left: 2</div>
+  
+  <div style="margin-top:15px;">Score: <span id="score">0</span></div>
+</div>
+
+<div class="history-box">
+  <strong>📝 Words Tested:</strong>
+  <ul id="testedList" class="history-list"></ul>
+</div>
+
+<script>
+  // Word Bank from Source [cite: 3, 166, 168, 171, 173, 175, 299, 301, 303, 434, 436]
+  const words = ["ability", "achieve", "ancient", "brilliant", "community", "definitely", "environment", "frequently", "government", "immediately", "language", "necessary", "opportunity", "personality", "queue", "responsibility", "successful", "temperature", "unfortunately", "various"];
+  
+  let currentWord = "";
+  let score = 0;
+  let timer;
+  let timeLeft = 60;
+  let attempts = 0;
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Initialize on first click
+  window.onclick = function() {
+    if (currentWord === "") {
+      document.getElementById('status').innerText = "🟢 Active";
+      document.getElementById('status').style.color = "green";
+      nextRound();
+    }
+  };
+
+  function playSound(type) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    if (type === 'correct') {
+      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.3);
+    } else {
+      osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.3);
+    }
+  }
+
+  function nextRound() {
+    currentWord = words[Math.floor(Math.random() * words.length)];
+    attempts = 0;
+    document.getElementById('wordInput').value = "";
+    document.getElementById('feedback').innerText = "Attempts Left: 2";
+    document.getElementById('feedback').style.color = "black";
+    document.getElementById('hintContent').style.display = "none";
+    startTimer();
+    speakWord();
+  }
+
+  function speakWord() {
+    if (!currentWord) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(currentWord);
+    utter.rate = 0.8;
+    window.speechSynthesis.speak(utter);
+  }
+
+  function toggleHint() {
+    const hint = document.getElementById('hintContent');
+    hint.style.display = (hint.style.display === "none") ? "block" : "none";
+    document.getElementById('definitionText').innerText = "Look up the definition of '" + currentWord + "' to help your spelling!";
+  }
+
+  function startTimer() {
+    clearInterval(timer);
+    timeLeft = 60;
+    document.getElementById('timer').innerText = timeLeft + "s";
+    timer = setInterval(() => {
+      timeLeft--;
+      document.getElementById('timer').innerText = timeLeft + "s";
+      if (timeLeft <= 0) {
+        finishRound(false);
+      }
+    }, 1000);
+  }
+
+  function checkAnswer() {
+    const guess = document.getElementById('wordInput').value.toLowerCase().trim();
+    if (!guess) return;
+
+    if (guess === currentWord.toLowerCase()) {
+      playSound('correct');
+      score += 10;
+      document.getElementById('score').innerText = score;
+      document.getElementById('feedback').innerText = "Correct! ✨";
+      document.getElementById('feedback').style.color = "green";
+      finishRound(true);
+    } else {
+      attempts++;
+      playSound('incorrect');
+      if (attempts >= 2) {
+        document.getElementById('feedback').innerText = "Out of tries! Word was: " + currentWord;
+        document.getElementById('feedback').style.color = "red";
+        finishRound(false);
+      } else {
+        document.getElementById('feedback').innerText = "Wrong! ❌ 1 Attempt Left.";
+        document.getElementById('feedback').style.color = "orange";
+      }
+    }
+  }
+
+  function finishRound(wasCorrect) {
+    clearInterval(timer);
+    // Add to History
+    const list = document.getElementById('testedList');
+    const li = document.createElement('li');
+    li.innerHTML = currentWord + (wasCorrect ? " <span class='correct-text'>(Correct)</span>" : " <span class='incorrect-text'>(Failed)</span>");
+    list.prepend(li);
+    
+    setTimeout(nextRound, 2000);
+  }
+
+  document.getElementById('wordInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') checkAnswer();
+  });
+</script>
