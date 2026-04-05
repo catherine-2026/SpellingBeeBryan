@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spelling Bee Trainer</title>
+    <title>Spelling Bee</title>
   <h5>Created for Bryan with love, by Catherine N.C.L. (2026)</h5>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; display: flex; flex-direction: column; align-items: center; padding: 20px; }
@@ -29,7 +29,7 @@
     <h2 style="margin-top: 0; color: #2d3748;">🐝 CEFR Spelling Bee</h2>
     
     <div id="setupScreen">
-        <p style="color: #718096;">Divide all words into sets of 60.</p>
+        <p style="color: #718096;">Select a set (60 words each) to begin.</p>
         <select id="setSelector" class="set-select"></select>
         <button onclick="startSet()" class="btn-primary">Start Practice</button>
     </div>
@@ -39,9 +39,9 @@
         <button onclick="speakWord()" class="btn-primary">🔊 Listen to Word</button>
         
         <div id="hintContent" class="hidden" style="background:#fffaf0; padding:15px; border:1px dashed #ed8936; margin-bottom:10px; border-radius: 8px; text-align: left;">
-            <p><strong>Definition:</strong> <span id="hintText"></span></p>
+            <p><strong>Simple Definition:</strong> <span id="hintText"></span></p>
         </div>
-        <button onclick="toggleHint()" class="btn-hint">Get Simplified Definition</button>
+        <button onclick="toggleHint()" class="btn-hint">Show Definition</button>
 
         <div class="input-container">
             <input type="text" id="wordInput" placeholder="Type here..." autocomplete="off">
@@ -62,97 +62,78 @@
 </div>
 
 <div class="history-box">
-    <strong>📝 Words Tested:</strong>
+    <strong>📝 Practice Log:</strong>
     <ul id="testedList" class="history-list"></ul>
 </div>
 
 <script>
-    // Simplified Dictionary for common words
-    const simplifiedDefs = {
-        "ability": "The physical or mental power to do something.",
-        "abroad": "In or to a foreign country.",
-        "accident": "Something bad that happens that is not intended.",
-        "achieve": "To succeed in finishing something or reaching an aim.",
-        "actually": "Used when you are saying what is real or true.",
-        "adventure": "An exciting or unusual experience.",
-        "advertise": "To tell the public about a product or service.",
-        "affect": "To have an influence on someone or something.",
-        "ancient": "From a long time ago.",
-        "architecture": "The design and style of buildings.",
-        "available": "Able to be bought or used.",
-        "background": "A person's experience, family, and education.",
-        "beautiful": "Very attractive.",
-        "believe": "To think that something is true.",
-        "brilliant": "Extremely intelligent or skilled.",
-        "business": "The activity of buying and selling goods.",
-        "celebrity": "A famous person.",
-        "certainly": "Without any doubt; definitely.",
-        "character": "The person you are; or a person in a book or movie.",
-        "communicate": "To share information with others by speaking or writing.",
-        "community": "The people living in one particular area.",
-        "compete": "To try to be more successful than someone else.",
-        "completely": "In every way or as much as possible.",
-        "condition": "The particular state that something or someone is in.",
-        "conference": "A large meeting of people to discuss a subject.",
-        "continue": "To keep happening or existing.",
-        "control": "The power to make a person or thing do what you want.",
-        "correctly": "In a way that is right and has no mistakes.",
-        "dangerous": "Able or likely to cause harm or death.",
-        "decision": "A choice that you make about something after thinking.",
-        "definitely": "Without any doubt.",
-        "delicious": "Having a very good taste or smell.",
-        "describe": "To say what someone or something is like.",
+    // Simplified Definitions mapping
+    const definitions = {
+        "ability": "The skill or power to do something.",
+        "abroad": "To be in a different country.",
+        "accident": "A bad thing that happens by mistake.",
+        "achieve": "To successfully complete something after hard work.",
+        "actually": "Used to describe what is real or true.",
+        "adventure": "An exciting and unusual experience.",
+        "affect": "To cause a change in someone or something.",
+        "ancient": "Something from a very long time ago.",
+        "architecture": "The art or practice of designing buildings.",
+        "available": "Ready to be used or bought.",
+        "background": "The parts of a picture that are behind the main object.",
+        "beautiful": "Very pretty or pleasing to look at.",
+        "believe": "To feel sure that something is true.",
+        "brilliant": "Extremely clever or very bright.",
+        "business": "The work of buying or selling things for money.",
+        "celebrity": "A person who is very famous.",
+        "certainly": "Without any doubt.",
+        "character": "A person in a story, movie, or play.",
+        "communicate": "To share information or ideas with others.",
+        "community": "A group of people living in the same area.",
+        "completely": "Fully; in every way.",
+        "condition": "The state that something is in.",
+        "continue": "To keep doing something without stopping.",
+        "dangerous": "Likely to cause harm or injury.",
+        "decision": "A choice you make after thinking about it.",
+        "delicious": "Food that tastes very good.",
+        "describe": "To explain what someone or something is like.",
         "difference": "The way in which two things are not the same.",
-        "disappear": "To go somewhere where you cannot be seen.",
-        "disaster": "Something that causes great harm or damage.",
-        "discover": "To find information or a place for the first time.",
-        "environment": "The air, water, and land in which people live.",
-        "especially": "Used to point out one person, thing, or situation.",
-        "excellent": "Extremely good.",
-        "experience": "Knowledge or skill from doing something.",
-        "explanation": "The details that someone gives to make something clear.",
-        "extremely": "To a very great degree; very.",
-        "frequently": "Often.",
-        "furniture": "Things like chairs and tables in a room.",
-        "government": "The group of people who control a country.",
-        "immediately": "Now or without delay.",
-        "important": "Necessary or of great value.",
-        "impossible": "If an action is impossible, it cannot happen.",
-        "independent": "Not influenced or controlled in any way by others.",
-        "information": "Facts about a situation, person, or event.",
-        "intelligent": "Able to learn and understand things easily.",
-        "international": "Involving more than one country.",
-        "introduction": "An occasion when something is put into use for the first time.",
-        "island": "A piece of land completely surrounded by water.",
-        "knowledge": "Understanding of a subject that you get by experience or study.",
-        "language": "A system of communication used by a community.",
-        "literature": "Written artistic works, especially those with lasting value.",
-        "magazine": "A thin book that you can buy every week or month.",
-        "mathematics": "The study of numbers, shapes, and space.",
-        "medicine": "A substance used to treat an illness.",
-        "necessary": "Needed in order to achieve a result.",
-        "organization": "A group of people who work together for a goal.",
-        "personality": "The type of person you are.",
-        "photograph": "A picture produced using a camera.",
-        "pollution": "Damage caused to water, air, etc. by harmful waste.",
-        "population": "All the people living in a particular area.",
-        "possible": "Able to be done or achieved.",
-        "probably": "Used to mean that something is very likely.",
-        "professional": "Related to work that needs special training.",
-        "punctuation": "Marks used in writing to separate sentences.",
-        "relationship": "The way in which two people or groups feel toward each other.",
-        "successful": "Achieving the results wanted or hoped for.",
-        "temperature": "The measured amount of heat in a place or body.",
-        "traditional": "Following or belonging to the customs of a group.",
-        "university": "A place of higher education.",
-        "valuable": "Worth a lot of money.",
-        "vegetable": "A plant used as food.",
-        "visitor": "Someone who visits a person or place.",
-        "wonderful": "Extremely good."
+        "disappear": "To go away so that you cannot be seen.",
+        "disaster": "An event that causes a lot of damage.",
+        "environment": "The world around us (air, water, and land).",
+        "excellent": "Something that is very, very good.",
+        "experience": "Knowledge you get from doing things.",
+        "explanation": "Giving reasons to make something clear.",
+        "frequently": "Happening many times; often.",
+        "furniture": "Items like tables and chairs in a room.",
+        "government": "The group of people who lead a country.",
+        "immediately": "Right now, without waiting.",
+        "impossible": "Something that cannot happen.",
+        "independent": "Not controlled by others; doing things alone.",
+        "intelligent": "Able to learn and understand things quickly.",
+        "international": "Involving two or more countries.",
+        "knowledge": "Information and facts that you know.",
+        "language": "The words and system we use to speak to each other.",
+        "literature": "Books and stories that are considered art.",
+        "medicine": "Something you take to feel better when sick.",
+        "necessary": "Something you must have or do.",
+        "opportunity": "A chance to do something you want to do.",
+        "personality": "The way a person acts, feels, and thinks.",
+        "pollution": "Dirty things that harm the air, water, or land.",
+        "population": "The total number of people living in a place.",
+        "probably": "Used to say that something is likely to happen.",
+        "relationship": "The way two people are connected.",
+        "successful": "Reaching the goal you wanted.",
+        "temperature": "How hot or cold something is.",
+        "traditional": "Something done for a long time in a certain culture.",
+        "university": "A school for high-level learning after high school.",
+        "valuable": "Worth a lot of money or very important.",
+        "vegetable": "A plant grown for food.",
+        "visitor": "A person who goes to see a place or person.",
+        "wonderful": "Extremely good or pleasant."
     };
 
-    // Full word list from provided sources
-    const masterList = ["ability", "able", "abroad", "accept", "accident", "achieve", "act", "active", "actually", "adult", "advantage", "adventure", "advertise", "affect", "after", "against", "ah", "airline", "alive", "all", "allow", "almost", "alone", "along", "already", "alternative", "although", "among", "amount", "ancient", "ankle", "any", "anybody", "anywhere", "app", "appear", "appearance", "apply", "architect", "architecture", "argue", "argument", "army", "arrange", "arrangement", "as", "asleep", "assistant", "athlete", "attack", "attend", "attention", "attractive", "audience", "author", "available", "average", "avoid", "award", "awful", "back", "background", "badly", "bar", "baseball", "based", "basketball", "bean", "bear", "beat", "beef", "before", "behave", "behaviour", "belong", "belt", "benefit", "billion", "bin", "biology", "birth", "biscuit", "bit", "blank", "blood", "blow", "board", "boil", "bone", "book", "borrow", "boss", "bottom", "bowl", "brain", "bridge", "bright", "brilliant", "broken", "brush", "burn", "businessman", "button", "camp", "camping", "carpet", "cartoon", "cash", "castle", "catch", "cause", "celebrate", "celebrity", "certainly", "character", "charity", "chemistry", "cigarette", "circle", "classical", "clearly", "clever", "climate", "closed", "clothing", "cloud", "coach", "coast", "colleague", "collect", "column", "comedy", "comfortable", "comment", "communicate", "community", "compete", "competition", "complain", "completely", "condition", "conference", "connect", "connected", "consider", "contain", "context", "continent", "continue", "control", "cooker", "correctly", "countryside", "couple", "creative", "credit", "criminal", "crowded", "cupboard", "curly", "cycle", "daily", "danger", "daughter", "decision", "definitely", "degree", "dentist", "department", "depend", "desert", "designer", "destroy", "detective", "develop", "digital", "direction", "director", "disagree", "disappear", "disaster", "discover", "discussion", "disease", "distance", "divorced", "document", "download", "downstairs", "drawing", "dream", "driving", "education", "effect", "either", "electric", "electrical", "electricity", "electronic", "emergency", "employee", "employer", "engine", "engineer", "enormous", "environment", "equipment", "especially", "everything", "everywhere", "evidence", "exactly", "excellent", "exercise", "exhibition", "expect", "expensive", "experience", "experiment", "explain", "explanation", "extremely", "factory", "fashion", "favorite", "finally", "finger", "fishing", "flight", "flower", "football", "foreign", "forest", "fortunately", "fountain", "fresh", "fridge", "friendly", "frightened", "furniture", "furthermore", "generally", "generous", "government", "grammar", "ground", "group", "guitar", "health", "healthy", "heart", "heavy", "height", "helpful", "history", "holiday", "horrible", "hospital", "however", "hundred", "hungry", "husband", "identify", "identity", "immediately", "important", "impossible", "improve", "including", "increase", "incredible", "independent", "individual", "indoor", "industry", "informal", "information", "insect", "inside", "instead", "instruction", "instrument", "intelligent", "interested", "interesting", "international", "internet", "interrupt", "interview", "introduction", "invent", "invitation", "island", "jewelry", "journey", "journalist", "kitchen", "knife", "knowledge", "language", "laptop", "laugh", "lawyer", "learning", "lecture", "lemonade", "lesson", "library", "license", "lifestyle", "likely", "literature", "living", "local", "location", "lovely", "lucky", "luggage", "machine", "magazine", "manager", "married", "material", "mathematics", "matter", "measure", "mechanic", "medicine", "member", "memory", "mention", "message", "middle", "million", "mirror", "mistake", "mobile", "modern", "moment", "mountain", "mouse", "mouth", "movement", "museum", "musical", "musician", "narrow", "national", "natural", "nature", "nearly", "necessary", "negative", "neither", "nervous", "network", "newspaper", "noise", "noisy", "normal", "normally", "northern", "notice", "novel", "number", "nurse", "object", "obvious", "occasion", "ocean", "office", "officer", "often", "online", "opinion", "opposite", "option", "orange", "organization", "organize", "original", "outside", "owner", "package", "painter", "palace", "parent", "parking", "parrot", "particular", "partner", "passenger", "passport", "patient", "pattern", "perfectly", "performance", "perhaps", "personality", "petrol", "pharmacy", "phone", "photo", "phrase", "physical", "physics", "piano", "picture", "piece", "pilot", "pizza", "place", "plane", "planet", "plastic", "plate", "platform", "player", "pleasant", "pleased", "pocket", "polite", "politics", "pollution", "pool", "popular", "position", "positive", "possible", "possibly", "post", "poster", "potato", "power", "practice", "prefer", "prepare", "president", "pressure", "prevent", "primary", "prince", "princess", "printer", "prison", "private", "prize", "produce", "product", "professor", "program", "project", "promise", "pronounce", "protect", "proud", "provide", "public", "publish", "purple", "purpose", "puzzle", "quarter", "queen", "question", "quietly", "railway", "rather", "realize", "receipt", "receive", "recently", "recipe", "recognize", "recommend", "record", "recycle", "reduce", "refuse", "region", "regular", "relation", "relax", "release", "religion", "remain", "remember", "remind", "remove", "repair", "repeat", "replace", "reply", "report", "request", "require", "rescue", "research", "reserve", "respect", "respond", "response", "result", "retire", "review", "reward", "robot", "routine", "rubbish", "running", "safety", "sailor", "salary", "sandwich", "sauce", "sausage", "science", "scientist", "scooter", "score", "screen", "search", "season", "secret", "section", "secure", "security", "select", "separate", "series", "serious", "service", "several", "shadow", "shake", "shame", "shape", "share", "sharp", "shave", "sheep", "sheet", "shelf", "shell", "shine", "shiny", "shirt", "shock", "shoes", "shoot", "short", "should", "shoulder", "shout", "shower", "shrimp", "silent", "silly", "silver", "simple", "since", "singer", "single", "sister", "situation", "skill", "skirt", "slice", "slide", "slight", "slim", "smart", "smell", "smile", "smoke", "smooth", "snack", "snake", "snow", "soap", "soccer", "social", "society", "soft", "solar", "soldier", "solve", "sorry", "sound", "sour", "south", "space", "speak", "special", "speech", "speed", "spell", "spend", "spicy", "spider", "spirit", "spoon", "sport", "spread", "spring", "square", "staff", "stage", "stair", "stamp", "stand", "star", "start", "state", "station", "steak", "steal", "steam", "steel", "steer", "step", "stick", "still", "sting", "stomach", "stone", "stop", "store", "storm", "story", "stove", "straight", "strange", "stream", "street", "stress", "strict", "strike", "string", "strong", "student", "studio", "study", "stuff", "stupid", "style", "subject", "subway", "succeed", "success", "sudden", "sugar", "suggest", "suit", "summer", "supper", "supply", "support", "surface", "surgery", "surname", "survive", "sweet", "swim", "switch", "symbol", "system", "tablet", "talent", "talk", "tall", "tank", "tape", "target", "task", "taste", "teacher", "team", "tech", "teeth", "tennis", "tent", "term", "test", "text", "theatre", "theme", "theory", "thick", "thief", "thin", "third", "thirst", "thought", "thousand", "threat", "throat", "through", "throw", "thumb", "thunder", "ticket", "tidy", "tiger", "tight", "tissue", "title", "together", "tomato", "tomorrow", "tongue", "tonight", "tool", "tooth", "topic", "total", "touch", "tough", "tour", "toward", "towel", "tower", "traffic", "trainer", "travel", "tray", "treat", "trend", "trial", "trick", "trip", "trouble", "truck", "truth", "tunnel", "turtle", "twice", "twin", "tyre", "ugly", "umbrella", "uncle", "under", "unit", "united", "unlock", "until", "update", "upper", "upset", "upstairs", "urgent", "useful", "user", "usual", "valley", "value", "variety", "various", "vehicle", "version", "victim", "village", "violin", "virus", "visitor", "visual", "vital", "voice", "volume", "vote", "voyage", "waiter", "wallet", "walnut", "warm", "warning", "waste", "water", "wave", "weapon", "weather", "web", "website", "wedding", "week", "weekend", "weekly", "weep", "weigh", "weight", "weird", "welcome", "well", "west", "western", "wet", "whale", "what", "wheel", "when", "where", "whether", "which", "while", "white", "who", "whole", "whom", "whose", "why", "wide", "widow", "width", "wife", "wild", "will", "win", "wind", "window", "windy", "wine", "wing", "winner", "winter", "wipe", "wire", "wisdom", "wise", "wish", "with", "within", "without", "witness", "wolf", "woman", "wonder", "wooden", "worker", "world", "worry", "worse", "worst", "worth", "wound", "wrist", "write", "writer", "wrong", "yellow", "yoga", "yogurt", "you", "young", "your", "yours", "youth", "zebra", "zero", "zone"];
+    // Words from Source A2  and B1 
+    const masterList = ["ability", "able", "abroad", "accept", "accident", "achieve", "act", "active", "actually", "adult", "advantage", "adventure", "advertise", "affect", "after", "against", "ah", "airline", "alive", "all", "allow", "almost", "alone", "along", "already", "alternative", "although", "among", "amount", "ancient", "ankle", "any", "anybody", "anywhere", "app", "appear", "appearance", "apply", "architect", "architecture", "argue", "argument", "army", "arrange", "arrangement", "as", "asleep", "assistant", "athlete", "attack", "attend", "attention", "attractive", "audience", "author", "available", "average", "avoid", "award", "awful", "back", "background", "badly", "bar", "baseball", "based", "basketball", "bean", "bear", "beat", "beef", "before", "behave", "behaviour", "belong", "belt", "benefit", "billion", "bin", "biology", "birth", "biscuit", "bit", "blank", "blood", "blow", "board", "boil", "bone", "book", "borrow", "boss", "bottom", "bowl", "brain", "bridge", "bright", "brilliant", "broken", "brush", "burn", "businessman", "button", "camp", "camping", "carpet", "cartoon", "cash", "castle", "catch", "cause", "celebrate", "celebrity", "certainly", "character", "charity", "chemistry", "cigarette", "circle", "classical", "clearly", "clever", "climate", "closed", "clothing", "cloud", "coach", "coast", "colleague", "collect", "column", "comedy", "comfortable", "comment", "communicate", "community", "compete", "competition", "complain", "completely", "condition", "conference", "connect", "connected", "consider", "contain", "context", "continent", "continue", "control", "cooker", "correctly", "countryside", "couple", "creative", "credit", "criminal", "crowded", "cupboard", "curly", "cycle", "daily", "danger", "daughter", "decision", "definitely", "degree", "dentist", "department", "depend", "desert", "designer", "destroy", "detective", "develop", "digital", "direction", "director", "disagree", "disappear", "disaster", "discover", "discussion", "disease", "distance", "divorced", "document", "download", "downstairs", "drawing", "dream", "driving", "education", "effect", "either", "electric", "electrical", "electricity", "electronic", "emergency", "employee", "employer", "engine", "engineer", "enormous", "environment", "equipment", "especially", "everything", "everywhere", "evidence", "exactly", "excellent", "exercise", "exhibition", "expect", "expensive", "experience", "experienced", "experiment", "explain", "explanation", "extremely", "factory", "fashion", "favorite", "finally", "finger", "fishing", "flight", "flower", "football", "foreign", "forest", "fortunately", "fountain", "fresh", "fridge", "friendly", "frightened", "furniture", "furthermore", "generally", "generous", "government", "grammar", "ground", "group", "guitar", "health", "healthy", "heart", "heavy", "height", "helpful", "history", "holiday", "horrible", "hospital", "however", "hundred", "hungry", "husband", "identify", "identity", "immediately", "important", "impossible", "improve", "including", "increase", "incredible", "independent", "individual", "indoor", "industry", "informal", "information", "insect", "inside", "instead", "instruction", "instrument", "intelligent", "interested", "interesting", "international", "internet", "interrupt", "interview", "introduction", "invent", "invitation", "island", "jewelry", "journey", "journalist", "kitchen", "knife", "knowledge", "language", "laptop", "laugh", "lawyer", "learning", "lecture", "lemonade", "library", "license", "lifestyle", "likely", "literature", "living", "local", "location", "lovely", "lucky", "luggage", "machine", "magazine", "manager", "married", "material", "mathematics", "matter", "measure", "mechanic", "medicine", "member", "memory", "mention", "message", "middle", "million", "mirror", "mistake", "mobile", "modern", "moment", "mountain", "mouse", "mouth", "movement", "museum", "musical", "musician", "narrow", "national", "natural", "nature", "nearly", "necessary", "negative", "neither", "nervous", "network", "newspaper", "noise", "noisy", "normal", "normally", "northern", "notice", "novel", "number", "nurse", "object", "obvious", "occasion", "ocean", "office", "officer", "often", "online", "opinion", "opposite", "option", "orange", "organization", "organize", "original", "outside", "owner", "package", "painter", "palace", "parent", "parking", "parrot", "particular", "partner", "passenger", "passport", "patient", "pattern", "perfectly", "performance", "perhaps", "personality", "petrol", "pharmacy", "phone", "photo", "phrase", "physical", "physics", "piano", "picture", "piece", "pilot", "pizza", "place", "plane", "planet", "plastic", "plate", "platform", "player", "pleasant", "pleased", "pocket", "polite", "politics", "pollution", "pool", "popular", "position", "positive", "possible", "possibly", "post", "poster", "potato", "power", "practice", "prefer", "prepare", "president", "pressure", "prevent", "primary", "prince", "princess", "printer", "prison", "private", "prize", "produce", "product", "professor", "program", "project", "promise", "pronounce", "protect", "proud", "provide", "public", "publish", "purple", "purpose", "puzzle", "quarter", "queen", "question", "quietly", "railway", "rather", "realize", "receipt", "receive", "recently", "recipe", "recognize", "recommend", "record", "recycle", "reduce", "refuse", "region", "regular", "relation", "relax", "release", "religion", "remain", "remember", "remind", "remove", "repair", "repeat", "replace", "reply", "report", "request", "require", "rescue", "research", "reserve", "respect", "respond", "response", "result", "retire", "review", "reward", "robot", "routine", "rubbish", "running", "safety", "sailor", "salary", "sandwich", "sauce", "sausage", "science", "scientist", "scooter", "score", "screen", "search", "season", "secret", "section", "secure", "security", "select", "separate", "series", "serious", "service", "several", "shadow", "shake", "shame", "shape", "share", "sharp", "shave", "sheep", "sheet", "shelf", "shell", "shine", "shiny", "shirt", "shock", "shoes", "shoot", "short", "should", "shoulder", "shout", "shower", "shrimp", "silent", "silly", "silver", "simple", "since", "singer", "single", "sister", "situation", "skill", "skirt", "slice", "slide", "slight", "slim", "smart", "smell", "smile", "smoke", "smooth", "snack", "snake", "snow", "soap", "soccer", "social", "society", "soft", "solar", "soldier", "solve", "sorry", "sound", "sour", "south", "space", "speak", "special", "speech", "speed", "spell", "spend", "spicy", "spider", "spirit", "spoon", "sport", "spread", "spring", "square", "staff", "stage", "stair", "stamp", "stand", "star", "start", "state", "station", "steak", "steal", "steam", "steel", "steer", "step", "stick", "still", "sting", "stomach", "stone", "stop", "store", "storm", "story", "stove", "straight", "strange", "stream", "street", "stress", "strict", "strike", "string", "strong", "student", "studio", "study", "stuff", "stupid", "style", "subject", "subway", "succeed", "success", "sudden", "sugar", "suggest", "suit", "summer", "supper", "supply", "support", "surface", "surgery", "surname", "survive", "sweet", "swim", "switch", "symbol", "system", "tablet", "talent", "talk", "tall", "tank", "tape", "target", "task", "taste", "teacher", "team", "tech", "teeth", "tennis", "tent", "term", "test", "text", "theatre", "theme", "theory", "thick", "thief", "thin", "third", "thirst", "thought", "thousand", "threat", "throat", "through", "throw", "thumb", "thunder", "ticket", "tidy", "tie", "tiger", "tight", "tissue", "title", "together", "tomato", "tomorrow", "tongue", "tonight", "tool", "tooth", "topic", "total", "touch", "tough", "tour", "toward", "towel", "tower", "traffic", "trainer", "travel", "tray", "treat", "trend", "trial", "trick", "trip", "trouble", "truck", "truth", "tunnel", "turtle", "twice", "twin", "tyre", "ugly", "umbrella", "uncle", "under", "unit", "united", "unlock", "until", "update", "upper", "upset", "upstairs", "urgent", "useful", "user", "usual", "valley", "value", "variety", "various", "vehicle", "version", "victim", "village", "violin", "virus", "visitor", "visual", "vital", "voice", "volume", "vote", "voyage", "waiter", "wallet", "walnut", "warm", "warning", "waste", "water", "wave", "weapon", "weather", "web", "website", "wedding", "week", "weekend", "weekly", "weep", "weigh", "weight", "weird", "welcome", "well", "west", "western", "wet", "whale", "what", "wheel", "when", "where", "whether", "which", "while", "white", "who", "whole", "whom", "whose", "why", "wide", "widow", "width", "wife", "wild", "will", "win", "wind", "window", "windy", "wine", "wing", "winner", "winter", "wipe", "wire", "wisdom", "wise", "wish", "with", "within", "without", "witness", "wolf", "woman", "wonder", "wooden", "worker", "world", "worry", "worse", "worst", "worth", "wound", "wrist", "write", "writer", "wrong", "yellow", "yoga", "yogurt", "you", "young", "your", "yours", "youth", "zebra", "zero", "zone"];
 
     const sets = [];
     for (let i = 0; i < masterList.length; i += 60) {
@@ -168,7 +149,7 @@
     let timeLeft = 60;
     let isSubmitted = false;
 
-    // Initialize Menu
+    // Build Selector
     const selector = document.getElementById('setSelector');
     sets.forEach((set, i) => {
         let opt = document.createElement('option');
@@ -198,31 +179,26 @@
         currentSet = sets[selector.value];
         document.getElementById('setupScreen').classList.add('hidden');
         document.getElementById('gameScreen').classList.remove('hidden');
-        wordIndex = 0;
-        score = 0;
-        document.getElementById('score').innerText = "0";
+        wordIndex = 0; score = 0;
         document.getElementById('testedList').innerHTML = ""; 
         nextWord();
     }
 
     function resetToMenu() {
-        clearInterval(timer);
-        window.speechSynthesis.cancel();
+        clearInterval(timer); window.speechSynthesis.cancel();
         document.getElementById('gameOverScreen').classList.add('hidden');
         document.getElementById('gameScreen').classList.add('hidden');
         document.getElementById('setupScreen').classList.remove('hidden');
-        currentWord = "";
-        isSubmitted = false;
+        currentWord = ""; isSubmitted = false;
     }
 
     function nextWord() {
         if (wordIndex >= currentSet.length) {
-            endGame(`CONGRATULATIONS! Set Finished. Final Score: ${score}/600`);
+            endGame(`CONGRATULATIONS! Set Finished. Score: ${score}/600`);
             return;
         }
         currentWord = currentSet[wordIndex];
-        attempts = 0;
-        isSubmitted = false;
+        attempts = 0; isSubmitted = false;
         document.getElementById('wordInput').value = "";
         document.getElementById('submitBtn').disabled = false;
         document.getElementById('feedback').innerText = "Attempts: 0/2";
@@ -230,19 +206,17 @@
         document.getElementById('progress').innerText = wordIndex + 1;
         document.getElementById('hintContent').classList.add('hidden');
         
-        // Definition logic
-        let def = simplifiedDefs[currentWord] || `This word starts with '${currentWord[0].toUpperCase()}' and has ${currentWord.length} letters.`;
-        document.getElementById('hintText').innerText = def;
+        // Use dictionary definition or general description
+        let d = definitions[currentWord] || `A common English word starting with '${currentWord[0].toUpperCase()}' that has ${currentWord.length} letters.`;
+        document.getElementById('hintText').innerText = d;
         
-        startTimer();
-        speakWord();
+        startTimer(); speakWord();
     }
 
     function speakWord() {
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(currentWord);
-        utter.rate = 0.8;
-        utter.lang = 'en-US';
+        utter.rate = 0.8; utter.lang = 'en-US';
         window.speechSynthesis.speak(utter);
     }
 
@@ -252,40 +226,32 @@
         if (!guess) return;
 
         if (guess === currentWord.toLowerCase()) {
-            playSound('correct');
-            score += 10;
+            playSound('correct'); score += 10;
             document.getElementById('score').innerText = score;
             logHistory(currentWord, true);
-            isSubmitted = true;
-            document.getElementById('submitBtn').disabled = true;
-            wordIndex++;
-            clearInterval(timer);
+            isSubmitted = true; document.getElementById('submitBtn').disabled = true;
+            wordIndex++; clearInterval(timer);
             setTimeout(nextWord, 1200);
         } else {
-            attempts++;
-            playSound('incorrect');
+            attempts++; playSound('incorrect');
             if (attempts >= 2) {
-                isSubmitted = true;
-                document.getElementById('submitBtn').disabled = true;
+                isSubmitted = true; document.getElementById('submitBtn').disabled = true;
                 logHistory(currentWord, false);
-                endGame(`GAME OVER! Incorrect twice on "${currentWord.toUpperCase()}". Final Score: ${score}`);
+                endGame(`GAME OVER! Incorrect twice on "${currentWord.toUpperCase()}". Score: ${score}`);
             } else {
-                document.getElementById('feedback').innerText = "Wrong! Attempt 1 of 2 used.";
+                document.getElementById('feedback').innerText = "Wrong! 1 attempt left.";
                 document.getElementById('feedback').style.color = "#ed8936";
             }
         }
     }
 
     function startTimer() {
-        clearInterval(timer);
-        timeLeft = 60;
+        clearInterval(timer); timeLeft = 60;
         document.getElementById('timer').innerText = timeLeft + "s";
         timer = setInterval(() => {
-            timeLeft--;
-            document.getElementById('timer').innerText = timeLeft + "s";
+            timeLeft--; document.getElementById('timer').innerText = timeLeft + "s";
             if (timeLeft <= 0) {
-                clearInterval(timer);
-                logHistory(currentWord, false);
+                clearInterval(timer); logHistory(currentWord, false);
                 endGame(`GAME OVER! Time ran out. Word was "${currentWord.toUpperCase()}". Score: ${score}`);
             }
         }, 1000);
@@ -294,13 +260,12 @@
     function logHistory(word, correct) {
         const list = document.getElementById('testedList');
         const li = document.createElement('li');
-        li.innerHTML = `<strong>${word.toUpperCase()}</strong> — ${correct ? '<span style="color:#48bb78;">✔ Correct</span>' : '<span style="color:#f56565;">✘ Failed</span>'}`;
+        li.innerHTML = `<strong>${word.toUpperCase()}</strong> — ${correct ? '<span style="color:#48bb78;">✔</span>' : '<span style="color:#f56565;">✘</span>'}`;
         list.prepend(li);
     }
 
     function endGame(msg) {
-        clearInterval(timer);
-        window.speechSynthesis.cancel();
+        clearInterval(timer); window.speechSynthesis.cancel();
         document.getElementById('gameOverScreen').classList.remove('hidden');
         document.getElementById('finalMsg').innerText = msg;
     }
