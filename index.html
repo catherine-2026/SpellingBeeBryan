@@ -1,166 +1,317 @@
-<style>
-  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-  #app { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-  #timer { font-size: 2rem; font-weight: bold; color: #e53e3e; margin: 10px 0; }
-  .btn-primary { background: #4a90e2; color: white; border: none; padding: 15px; border-radius: 50px; cursor: pointer; width: 100%; font-size: 1.2rem; margin-bottom: 10px; }
-  .btn-hint { background: #edf2f7; border: 1px solid #cbd5e0; padding: 8px; width: 100%; cursor: pointer; border-radius: 5px; margin-bottom: 10px; }
-  .input-container { margin-top: 20px; display: flex; gap: 10px; }
-  input { flex: 1; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; }
-  #submitBtn { background: #48bb78; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-  #feedback { margin-top: 15px; font-weight: bold; min-height: 25px; }
-  .hint-box { display: none; background: #fffaf0; padding: 10px; border: 1px dashed #f6ad55; margin-bottom: 10px; text-align: left; font-size: 0.9rem; }
-  .history-box { margin-top: 30px; width: 100%; max-width: 400px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-  .history-list { text-align: left; font-size: 0.85rem; max-height: 150px; overflow-y: auto; padding-left: 20px; }
-  .correct-text { color: green; }
-  .incorrect-text { color: red; }
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Bee Trainer</title>
+  <h5>Created for Bryan with love, by Catherine N.C.L. (2026)</h5>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        #app { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; border: 2px solid #e2e8f0; }
+        .hidden { display: none !important; }
+        #timer { font-size: 2.5rem; font-weight: bold; color: #e53e3e; margin: 10px 0; }
+        .btn-primary { background: #4a90e2; color: white; border: none; padding: 15px; border-radius: 50px; cursor: pointer; width: 100%; font-size: 1.1rem; margin-bottom: 10px; font-weight: bold; }
+        .btn-hint { background: #edf2f7; border: 1px solid #cbd5e0; padding: 8px; width: 100%; cursor: pointer; border-radius: 5px; margin-bottom: 10px; font-weight: 600; color: #4a5568; }
+        .input-container { margin-top: 20px; display: flex; gap: 10px; }
+        input { flex: 1; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1.2rem; text-align: center; }
+        #submitBtn { background: #48bb78; color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #submitBtn:disabled { background: #cbd5e0; cursor: not-allowed; }
+        .set-select { padding: 12px; margin: 20px 0; width: 100%; border-radius: 8px; border: 1px solid #cbd5e0; font-size: 1rem; }
+        #gameOverScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 32, 44, 0.98); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; text-align: center; padding: 20px; }
+        .history-box { margin-top: 20px; width: 100%; max-width: 450px; background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; }
+        .history-list { text-align: left; font-size: 0.9rem; max-height: 150px; overflow-y: auto; padding-left: 20px; }
+        #feedback { margin-top: 15px; font-weight: bold; font-size: 1.1rem; min-height: 1.5rem; }
+    </style>
+</head>
+<body>
 
 <div id="app">
-  <h2>🐝 Spelling Bee</h2>
-  <h3>Prepared by Catherine N.C.L (2026)</h3>
-  <div id="status">🔴 Click to Start</div>
-  <div id="timer">60s</div>
-  
-  <button onclick="speakWord()" class="btn-primary">🔊 Listen to Word</button>
-  
-  <div id="hintContent" class="hint-box">
-    <strong>Definition:</strong> <span id="definitionText"></span>
-  </div>
-  <button onclick="toggleHint()" class="btn-hint">Get Definition (Hint)</button>
+    <h2 style="margin-top: 0; color: #2d3748;">🐝 CEFR Spelling Bee</h2>
+    
+    <div id="setupScreen">
+        <p style="color: #718096;">Divide all words into sets of 60.</p>
+        <select id="setSelector" class="set-select"></select>
+        <button onclick="startSet()" class="btn-primary">Start Practice</button>
+    </div>
 
-  <div class="input-container">
-    <input type="text" id="wordInput" placeholder="Type here..." autocomplete="off">
-    <button onclick="checkAnswer()" id="submitBtn">Submit</button>
-  </div>
-  
-  <div id="feedback">Attempts Left: 2</div>
-  
-  <div style="margin-top:15px;">Score: <span id="score">0</span></div>
+    <div id="gameScreen" class="hidden">
+        <div id="timer">60s</div>
+        <button onclick="speakWord()" class="btn-primary">🔊 Listen to Word</button>
+        
+        <div id="hintContent" class="hidden" style="background:#fffaf0; padding:15px; border:1px dashed #ed8936; margin-bottom:10px; border-radius: 8px; text-align: left;">
+            <p><strong>Definition:</strong> <span id="hintText"></span></p>
+        </div>
+        <button onclick="toggleHint()" class="btn-hint">Get Simplified Definition</button>
+
+        <div class="input-container">
+            <input type="text" id="wordInput" placeholder="Type here..." autocomplete="off">
+            <button onclick="checkAnswer()" id="submitBtn">Submit</button>
+        </div>
+        
+        <div id="feedback">Attempts: 0/2</div>
+        <div style="margin-top:10px; font-size: 0.85rem; color: #a0aec0;">
+            Word <span id="progress">0</span> of 60 | Score: <span id="score">0</span>
+        </div>
+    </div>
+</div>
+
+<div id="gameOverScreen" class="hidden">
+    <h1 style="font-size: 3rem; color: #feb2b2;">GAME OVER</h1>
+    <p id="finalMsg" style="font-size: 1.2rem; margin-bottom: 25px;"></p>
+    <button onclick="resetToMenu()" class="btn-primary" style="width: 220px; background: #48bb78;">Return to Menu</button>
 </div>
 
 <div class="history-box">
-  <strong>📝 Words Tested:</strong>
-  <ul id="testedList" class="history-list"></ul>
+    <strong>📝 Words Tested:</strong>
+    <ul id="testedList" class="history-list"></ul>
 </div>
 
 <script>
-  // Word Bank from Source [cite: 3, 166, 168, 171, 173, 175, 299, 301, 303, 434, 436]
-  const words = ["ability", "achieve", "ancient", "brilliant", "community", "definitely", "environment", "frequently", "government", "immediately", "language", "necessary", "opportunity", "personality", "queue", "responsibility", "successful", "temperature", "unfortunately", "various"];
-  
-  let currentWord = "";
-  let score = 0;
-  let timer;
-  let timeLeft = 60;
-  let attempts = 0;
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Simplified Dictionary for common words
+    const simplifiedDefs = {
+        "ability": "The physical or mental power to do something.",
+        "abroad": "In or to a foreign country.",
+        "accident": "Something bad that happens that is not intended.",
+        "achieve": "To succeed in finishing something or reaching an aim.",
+        "actually": "Used when you are saying what is real or true.",
+        "adventure": "An exciting or unusual experience.",
+        "advertise": "To tell the public about a product or service.",
+        "affect": "To have an influence on someone or something.",
+        "ancient": "From a long time ago.",
+        "architecture": "The design and style of buildings.",
+        "available": "Able to be bought or used.",
+        "background": "A person's experience, family, and education.",
+        "beautiful": "Very attractive.",
+        "believe": "To think that something is true.",
+        "brilliant": "Extremely intelligent or skilled.",
+        "business": "The activity of buying and selling goods.",
+        "celebrity": "A famous person.",
+        "certainly": "Without any doubt; definitely.",
+        "character": "The person you are; or a person in a book or movie.",
+        "communicate": "To share information with others by speaking or writing.",
+        "community": "The people living in one particular area.",
+        "compete": "To try to be more successful than someone else.",
+        "completely": "In every way or as much as possible.",
+        "condition": "The particular state that something or someone is in.",
+        "conference": "A large meeting of people to discuss a subject.",
+        "continue": "To keep happening or existing.",
+        "control": "The power to make a person or thing do what you want.",
+        "correctly": "In a way that is right and has no mistakes.",
+        "dangerous": "Able or likely to cause harm or death.",
+        "decision": "A choice that you make about something after thinking.",
+        "definitely": "Without any doubt.",
+        "delicious": "Having a very good taste or smell.",
+        "describe": "To say what someone or something is like.",
+        "difference": "The way in which two things are not the same.",
+        "disappear": "To go somewhere where you cannot be seen.",
+        "disaster": "Something that causes great harm or damage.",
+        "discover": "To find information or a place for the first time.",
+        "environment": "The air, water, and land in which people live.",
+        "especially": "Used to point out one person, thing, or situation.",
+        "excellent": "Extremely good.",
+        "experience": "Knowledge or skill from doing something.",
+        "explanation": "The details that someone gives to make something clear.",
+        "extremely": "To a very great degree; very.",
+        "frequently": "Often.",
+        "furniture": "Things like chairs and tables in a room.",
+        "government": "The group of people who control a country.",
+        "immediately": "Now or without delay.",
+        "important": "Necessary or of great value.",
+        "impossible": "If an action is impossible, it cannot happen.",
+        "independent": "Not influenced or controlled in any way by others.",
+        "information": "Facts about a situation, person, or event.",
+        "intelligent": "Able to learn and understand things easily.",
+        "international": "Involving more than one country.",
+        "introduction": "An occasion when something is put into use for the first time.",
+        "island": "A piece of land completely surrounded by water.",
+        "knowledge": "Understanding of a subject that you get by experience or study.",
+        "language": "A system of communication used by a community.",
+        "literature": "Written artistic works, especially those with lasting value.",
+        "magazine": "A thin book that you can buy every week or month.",
+        "mathematics": "The study of numbers, shapes, and space.",
+        "medicine": "A substance used to treat an illness.",
+        "necessary": "Needed in order to achieve a result.",
+        "organization": "A group of people who work together for a goal.",
+        "personality": "The type of person you are.",
+        "photograph": "A picture produced using a camera.",
+        "pollution": "Damage caused to water, air, etc. by harmful waste.",
+        "population": "All the people living in a particular area.",
+        "possible": "Able to be done or achieved.",
+        "probably": "Used to mean that something is very likely.",
+        "professional": "Related to work that needs special training.",
+        "punctuation": "Marks used in writing to separate sentences.",
+        "relationship": "The way in which two people or groups feel toward each other.",
+        "successful": "Achieving the results wanted or hoped for.",
+        "temperature": "The measured amount of heat in a place or body.",
+        "traditional": "Following or belonging to the customs of a group.",
+        "university": "A place of higher education.",
+        "valuable": "Worth a lot of money.",
+        "vegetable": "A plant used as food.",
+        "visitor": "Someone who visits a person or place.",
+        "wonderful": "Extremely good."
+    };
 
-  // Initialize on first click
-  window.onclick = function() {
-    if (currentWord === "") {
-      document.getElementById('status').innerText = "🟢 Active";
-      document.getElementById('status').style.color = "green";
-      nextRound();
+    // Full word list from provided sources
+    const masterList = ["ability", "able", "abroad", "accept", "accident", "achieve", "act", "active", "actually", "adult", "advantage", "adventure", "advertise", "affect", "after", "against", "ah", "airline", "alive", "all", "allow", "almost", "alone", "along", "already", "alternative", "although", "among", "amount", "ancient", "ankle", "any", "anybody", "anywhere", "app", "appear", "appearance", "apply", "architect", "architecture", "argue", "argument", "army", "arrange", "arrangement", "as", "asleep", "assistant", "athlete", "attack", "attend", "attention", "attractive", "audience", "author", "available", "average", "avoid", "award", "awful", "back", "background", "badly", "bar", "baseball", "based", "basketball", "bean", "bear", "beat", "beef", "before", "behave", "behaviour", "belong", "belt", "benefit", "billion", "bin", "biology", "birth", "biscuit", "bit", "blank", "blood", "blow", "board", "boil", "bone", "book", "borrow", "boss", "bottom", "bowl", "brain", "bridge", "bright", "brilliant", "broken", "brush", "burn", "businessman", "button", "camp", "camping", "carpet", "cartoon", "cash", "castle", "catch", "cause", "celebrate", "celebrity", "certainly", "character", "charity", "chemistry", "cigarette", "circle", "classical", "clearly", "clever", "climate", "closed", "clothing", "cloud", "coach", "coast", "colleague", "collect", "column", "comedy", "comfortable", "comment", "communicate", "community", "compete", "competition", "complain", "completely", "condition", "conference", "connect", "connected", "consider", "contain", "context", "continent", "continue", "control", "cooker", "correctly", "countryside", "couple", "creative", "credit", "criminal", "crowded", "cupboard", "curly", "cycle", "daily", "danger", "daughter", "decision", "definitely", "degree", "dentist", "department", "depend", "desert", "designer", "destroy", "detective", "develop", "digital", "direction", "director", "disagree", "disappear", "disaster", "discover", "discussion", "disease", "distance", "divorced", "document", "download", "downstairs", "drawing", "dream", "driving", "education", "effect", "either", "electric", "electrical", "electricity", "electronic", "emergency", "employee", "employer", "engine", "engineer", "enormous", "environment", "equipment", "especially", "everything", "everywhere", "evidence", "exactly", "excellent", "exercise", "exhibition", "expect", "expensive", "experience", "experiment", "explain", "explanation", "extremely", "factory", "fashion", "favorite", "finally", "finger", "fishing", "flight", "flower", "football", "foreign", "forest", "fortunately", "fountain", "fresh", "fridge", "friendly", "frightened", "furniture", "furthermore", "generally", "generous", "government", "grammar", "ground", "group", "guitar", "health", "healthy", "heart", "heavy", "height", "helpful", "history", "holiday", "horrible", "hospital", "however", "hundred", "hungry", "husband", "identify", "identity", "immediately", "important", "impossible", "improve", "including", "increase", "incredible", "independent", "individual", "indoor", "industry", "informal", "information", "insect", "inside", "instead", "instruction", "instrument", "intelligent", "interested", "interesting", "international", "internet", "interrupt", "interview", "introduction", "invent", "invitation", "island", "jewelry", "journey", "journalist", "kitchen", "knife", "knowledge", "language", "laptop", "laugh", "lawyer", "learning", "lecture", "lemonade", "lesson", "library", "license", "lifestyle", "likely", "literature", "living", "local", "location", "lovely", "lucky", "luggage", "machine", "magazine", "manager", "married", "material", "mathematics", "matter", "measure", "mechanic", "medicine", "member", "memory", "mention", "message", "middle", "million", "mirror", "mistake", "mobile", "modern", "moment", "mountain", "mouse", "mouth", "movement", "museum", "musical", "musician", "narrow", "national", "natural", "nature", "nearly", "necessary", "negative", "neither", "nervous", "network", "newspaper", "noise", "noisy", "normal", "normally", "northern", "notice", "novel", "number", "nurse", "object", "obvious", "occasion", "ocean", "office", "officer", "often", "online", "opinion", "opposite", "option", "orange", "organization", "organize", "original", "outside", "owner", "package", "painter", "palace", "parent", "parking", "parrot", "particular", "partner", "passenger", "passport", "patient", "pattern", "perfectly", "performance", "perhaps", "personality", "petrol", "pharmacy", "phone", "photo", "phrase", "physical", "physics", "piano", "picture", "piece", "pilot", "pizza", "place", "plane", "planet", "plastic", "plate", "platform", "player", "pleasant", "pleased", "pocket", "polite", "politics", "pollution", "pool", "popular", "position", "positive", "possible", "possibly", "post", "poster", "potato", "power", "practice", "prefer", "prepare", "president", "pressure", "prevent", "primary", "prince", "princess", "printer", "prison", "private", "prize", "produce", "product", "professor", "program", "project", "promise", "pronounce", "protect", "proud", "provide", "public", "publish", "purple", "purpose", "puzzle", "quarter", "queen", "question", "quietly", "railway", "rather", "realize", "receipt", "receive", "recently", "recipe", "recognize", "recommend", "record", "recycle", "reduce", "refuse", "region", "regular", "relation", "relax", "release", "religion", "remain", "remember", "remind", "remove", "repair", "repeat", "replace", "reply", "report", "request", "require", "rescue", "research", "reserve", "respect", "respond", "response", "result", "retire", "review", "reward", "robot", "routine", "rubbish", "running", "safety", "sailor", "salary", "sandwich", "sauce", "sausage", "science", "scientist", "scooter", "score", "screen", "search", "season", "secret", "section", "secure", "security", "select", "separate", "series", "serious", "service", "several", "shadow", "shake", "shame", "shape", "share", "sharp", "shave", "sheep", "sheet", "shelf", "shell", "shine", "shiny", "shirt", "shock", "shoes", "shoot", "short", "should", "shoulder", "shout", "shower", "shrimp", "silent", "silly", "silver", "simple", "since", "singer", "single", "sister", "situation", "skill", "skirt", "slice", "slide", "slight", "slim", "smart", "smell", "smile", "smoke", "smooth", "snack", "snake", "snow", "soap", "soccer", "social", "society", "soft", "solar", "soldier", "solve", "sorry", "sound", "sour", "south", "space", "speak", "special", "speech", "speed", "spell", "spend", "spicy", "spider", "spirit", "spoon", "sport", "spread", "spring", "square", "staff", "stage", "stair", "stamp", "stand", "star", "start", "state", "station", "steak", "steal", "steam", "steel", "steer", "step", "stick", "still", "sting", "stomach", "stone", "stop", "store", "storm", "story", "stove", "straight", "strange", "stream", "street", "stress", "strict", "strike", "string", "strong", "student", "studio", "study", "stuff", "stupid", "style", "subject", "subway", "succeed", "success", "sudden", "sugar", "suggest", "suit", "summer", "supper", "supply", "support", "surface", "surgery", "surname", "survive", "sweet", "swim", "switch", "symbol", "system", "tablet", "talent", "talk", "tall", "tank", "tape", "target", "task", "taste", "teacher", "team", "tech", "teeth", "tennis", "tent", "term", "test", "text", "theatre", "theme", "theory", "thick", "thief", "thin", "third", "thirst", "thought", "thousand", "threat", "throat", "through", "throw", "thumb", "thunder", "ticket", "tidy", "tiger", "tight", "tissue", "title", "together", "tomato", "tomorrow", "tongue", "tonight", "tool", "tooth", "topic", "total", "touch", "tough", "tour", "toward", "towel", "tower", "traffic", "trainer", "travel", "tray", "treat", "trend", "trial", "trick", "trip", "trouble", "truck", "truth", "tunnel", "turtle", "twice", "twin", "tyre", "ugly", "umbrella", "uncle", "under", "unit", "united", "unlock", "until", "update", "upper", "upset", "upstairs", "urgent", "useful", "user", "usual", "valley", "value", "variety", "various", "vehicle", "version", "victim", "village", "violin", "virus", "visitor", "visual", "vital", "voice", "volume", "vote", "voyage", "waiter", "wallet", "walnut", "warm", "warning", "waste", "water", "wave", "weapon", "weather", "web", "website", "wedding", "week", "weekend", "weekly", "weep", "weigh", "weight", "weird", "welcome", "well", "west", "western", "wet", "whale", "what", "wheel", "when", "where", "whether", "which", "while", "white", "who", "whole", "whom", "whose", "why", "wide", "widow", "width", "wife", "wild", "will", "win", "wind", "window", "windy", "wine", "wing", "winner", "winter", "wipe", "wire", "wisdom", "wise", "wish", "with", "within", "without", "witness", "wolf", "woman", "wonder", "wooden", "worker", "world", "worry", "worse", "worst", "worth", "wound", "wrist", "write", "writer", "wrong", "yellow", "yoga", "yogurt", "you", "young", "your", "yours", "youth", "zebra", "zero", "zone"];
+
+    const sets = [];
+    for (let i = 0; i < masterList.length; i += 60) {
+        sets.push(masterList.slice(i, Math.min(i + 60, masterList.length)));
     }
-  };
 
-  function playSound(type) {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
+    let currentSet = [];
+    let currentWord = "";
+    let score = 0;
+    let wordIndex = 0;
+    let attempts = 0;
+    let timer;
+    let timeLeft = 60;
+    let isSubmitted = false;
 
-    if (type === 'correct') {
-      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // A5
-      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.3);
-    } else {
-      osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-      osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.2);
-      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.3);
+    // Initialize Menu
+    const selector = document.getElementById('setSelector');
+    sets.forEach((set, i) => {
+        let opt = document.createElement('option');
+        opt.value = i;
+        opt.innerHTML = `Set ${i + 1}: ${set[0].toUpperCase()} ... ${set[set.length-1].toUpperCase()}`;
+        selector.appendChild(opt);
+    });
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        if (type === 'correct') {
+            osc.frequency.setValueAtTime(523, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+        } else {
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.2);
+        }
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
     }
-  }
 
-  function nextRound() {
-    currentWord = words[Math.floor(Math.random() * words.length)];
-    attempts = 0;
-    document.getElementById('wordInput').value = "";
-    document.getElementById('feedback').innerText = "Attempts Left: 2";
-    document.getElementById('feedback').style.color = "black";
-    document.getElementById('hintContent').style.display = "none";
-    startTimer();
-    speakWord();
-  }
-
-  function speakWord() {
-    if (!currentWord) return;
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(currentWord);
-    utter.rate = 0.8;
-    window.speechSynthesis.speak(utter);
-  }
-
-  function toggleHint() {
-    const hint = document.getElementById('hintContent');
-    hint.style.display = (hint.style.display === "none") ? "block" : "none";
-    document.getElementById('definitionText').innerText = "Look up the definition of '" + currentWord + "' to help your spelling!";
-  }
-
-  function startTimer() {
-    clearInterval(timer);
-    timeLeft = 60;
-    document.getElementById('timer').innerText = timeLeft + "s";
-    timer = setInterval(() => {
-      timeLeft--;
-      document.getElementById('timer').innerText = timeLeft + "s";
-      if (timeLeft <= 0) {
-        finishRound(false);
-      }
-    }, 1000);
-  }
-
-  function checkAnswer() {
-    const guess = document.getElementById('wordInput').value.toLowerCase().trim();
-    if (!guess) return;
-
-    if (guess === currentWord.toLowerCase()) {
-      playSound('correct');
-      score += 10;
-      document.getElementById('score').innerText = score;
-      document.getElementById('feedback').innerText = "Correct! ✨";
-      document.getElementById('feedback').style.color = "green";
-      finishRound(true);
-    } else {
-      attempts++;
-      playSound('incorrect');
-      if (attempts >= 2) {
-        document.getElementById('feedback').innerText = "Out of tries! Word was: " + currentWord;
-        document.getElementById('feedback').style.color = "red";
-        finishRound(false);
-      } else {
-        document.getElementById('feedback').innerText = "Wrong! ❌ 1 Attempt Left.";
-        document.getElementById('feedback').style.color = "orange";
-      }
+    function startSet() {
+        currentSet = sets[selector.value];
+        document.getElementById('setupScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.remove('hidden');
+        wordIndex = 0;
+        score = 0;
+        document.getElementById('score').innerText = "0";
+        document.getElementById('testedList').innerHTML = ""; 
+        nextWord();
     }
-  }
 
-  function finishRound(wasCorrect) {
-    clearInterval(timer);
-    // Add to History
-    const list = document.getElementById('testedList');
-    const li = document.createElement('li');
-    li.innerHTML = currentWord + (wasCorrect ? " <span class='correct-text'>(Correct)</span>" : " <span class='incorrect-text'>(Failed)</span>");
-    list.prepend(li);
-    
-    setTimeout(nextRound, 2000);
-  }
+    function resetToMenu() {
+        clearInterval(timer);
+        window.speechSynthesis.cancel();
+        document.getElementById('gameOverScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.add('hidden');
+        document.getElementById('setupScreen').classList.remove('hidden');
+        currentWord = "";
+        isSubmitted = false;
+    }
 
-  document.getElementById('wordInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') checkAnswer();
-  });
+    function nextWord() {
+        if (wordIndex >= currentSet.length) {
+            endGame(`CONGRATULATIONS! Set Finished. Final Score: ${score}/600`);
+            return;
+        }
+        currentWord = currentSet[wordIndex];
+        attempts = 0;
+        isSubmitted = false;
+        document.getElementById('wordInput').value = "";
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('feedback').innerText = "Attempts: 0/2";
+        document.getElementById('feedback').style.color = "#4a5568";
+        document.getElementById('progress').innerText = wordIndex + 1;
+        document.getElementById('hintContent').classList.add('hidden');
+        
+        // Definition logic
+        let def = simplifiedDefs[currentWord] || `This word starts with '${currentWord[0].toUpperCase()}' and has ${currentWord.length} letters.`;
+        document.getElementById('hintText').innerText = def;
+        
+        startTimer();
+        speakWord();
+    }
+
+    function speakWord() {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(currentWord);
+        utter.rate = 0.8;
+        utter.lang = 'en-US';
+        window.speechSynthesis.speak(utter);
+    }
+
+    function checkAnswer() {
+        if (isSubmitted || currentWord === "") return;
+        const guess = document.getElementById('wordInput').value.toLowerCase().trim();
+        if (!guess) return;
+
+        if (guess === currentWord.toLowerCase()) {
+            playSound('correct');
+            score += 10;
+            document.getElementById('score').innerText = score;
+            logHistory(currentWord, true);
+            isSubmitted = true;
+            document.getElementById('submitBtn').disabled = true;
+            wordIndex++;
+            clearInterval(timer);
+            setTimeout(nextWord, 1200);
+        } else {
+            attempts++;
+            playSound('incorrect');
+            if (attempts >= 2) {
+                isSubmitted = true;
+                document.getElementById('submitBtn').disabled = true;
+                logHistory(currentWord, false);
+                endGame(`GAME OVER! Incorrect twice on "${currentWord.toUpperCase()}". Final Score: ${score}`);
+            } else {
+                document.getElementById('feedback').innerText = "Wrong! Attempt 1 of 2 used.";
+                document.getElementById('feedback').style.color = "#ed8936";
+            }
+        }
+    }
+
+    function startTimer() {
+        clearInterval(timer);
+        timeLeft = 60;
+        document.getElementById('timer').innerText = timeLeft + "s";
+        timer = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer').innerText = timeLeft + "s";
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                logHistory(currentWord, false);
+                endGame(`GAME OVER! Time ran out. Word was "${currentWord.toUpperCase()}". Score: ${score}`);
+            }
+        }, 1000);
+    }
+
+    function logHistory(word, correct) {
+        const list = document.getElementById('testedList');
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${word.toUpperCase()}</strong> — ${correct ? '<span style="color:#48bb78;">✔ Correct</span>' : '<span style="color:#f56565;">✘ Failed</span>'}`;
+        list.prepend(li);
+    }
+
+    function endGame(msg) {
+        clearInterval(timer);
+        window.speechSynthesis.cancel();
+        document.getElementById('gameOverScreen').classList.remove('hidden');
+        document.getElementById('finalMsg').innerText = msg;
+    }
+
+    function toggleHint() {
+        document.getElementById('hintContent').classList.toggle('hidden');
+    }
+
+    document.getElementById('wordInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    });
 </script>
+</body>
+</html>
